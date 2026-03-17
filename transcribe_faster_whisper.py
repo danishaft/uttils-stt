@@ -48,13 +48,37 @@ def main() -> int:
         vad_filter=True,
     )
 
+    # Collect segments for output
+    segment_list = []
+    
     # Write transcript.txt
     transcript_path = out_dir / "transcript.txt"
     with open(transcript_path, "w", encoding="utf-8") as f:
         for segment in segments:
+            segment_list.append({
+                "start": segment.start,
+                "end": segment.end,
+                "text": segment.text,
+            })
             f.write(segment.text + "\n")
 
-    print(f"Transcription complete: {transcript_path}")
+    # Write transcript.srt
+    srt_path = out_dir / "transcript.srt"
+    with open(srt_path, "w", encoding="utf-8") as f:
+        for i, seg in enumerate(segment_list, 1):
+            f.write(f"{i}\n")
+            f.write(f"{format_srt_time(seg['start'])} --> {format_srt_time(seg['end'])}\n")
+            f.write(f"{seg['text']}\n\n")
+
+    # Write segments.json
+    segments_path = out_dir / "segments.json"
+    with open(segments_path, "w", encoding="utf-8") as f:
+        json.dump(segment_list, f, indent=2)
+
+    print(f"Transcription complete:")
+    print(f"  {transcript_path}")
+    print(f"  {srt_path}")
+    print(f"  {segments_path}")
     return 0
 
 
