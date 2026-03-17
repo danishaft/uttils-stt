@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from faster_whisper import WhisperModel
@@ -75,10 +76,24 @@ def main() -> int:
     with open(segments_path, "w", encoding="utf-8") as f:
         json.dump(segment_list, f, indent=2)
 
+    # Write metadata.json
+    metadata = {
+        "model": args.model,
+        "language": info.language if hasattr(info, "language") else args.language,
+        "duration": info.duration if hasattr(info, "duration") else 0,
+        "transcribed_at": datetime.now(timezone.utc).isoformat(),
+        "input_file": input_path.name,
+        "segment_count": len(segment_list),
+    }
+    metadata_path = out_dir / "metadata.json"
+    with open(metadata_path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
+
     print(f"Transcription complete:")
     print(f"  {transcript_path}")
     print(f"  {srt_path}")
     print(f"  {segments_path}")
+    print(f"  {metadata_path}")
     return 0
 
 
