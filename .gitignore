@@ -7,6 +7,14 @@ __pycache__/
 venv/
 env/
 .venv/
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
 
 # Build
 dist/
