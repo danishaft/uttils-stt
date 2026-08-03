@@ -1,10 +1,11 @@
 # stt
 
-Transcribe YouTube videos or audio files to text + SRT subtitles using faster-whisper.
+Transcribe YouTube videos or audio files to text and SRT subtitles with
+`faster-whisper`.
 
 ## Install
 
-Requires `ffmpeg` first:
+Install Python 3.10 or newer and `ffmpeg` first:
 
 ```bash
 # Ubuntu/Debian
@@ -20,7 +21,8 @@ Then set up the environment:
 ./install.sh
 ```
 
-This creates a virtual environment with `faster-whisper` and `yt-dlp`.
+This creates a private virtual environment and installs the exact
+`faster-whisper` and `yt-dlp` dependency versions in `requirements.lock`.
 
 ## Quick Start
 
@@ -37,7 +39,7 @@ This creates a virtual environment with `faster-whisper` and `yt-dlp`.
 Each transcription creates a timestamped folder:
 
 ```
-~/Transcripts/20260314-120000-video-title/
+~/Transcripts/20260314-120000-video-title-a1B2c3/
 ├── audio.wav          # Converted audio (16kHz mono)
 ├── transcript.txt     # Plain text transcript
 ├── transcript.srt     # Subtitle file
@@ -65,6 +67,8 @@ Each transcription creates a timestamped folder:
 | large-v3 | 1x | Best | ~10 GB |
 
 First run downloads model weights (~100MB–3GB depending on model).
+
+Output directories and transcript files are owner-readable only by default.
 
 ## Examples
 
