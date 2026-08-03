@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
-SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 VENV="${STT_VENV:-$HOME/.venvs/stt}"
 MODEL="${STT_MODEL:-small}"
 LANGUAGE="${STT_LANG:-auto}"
@@ -10,6 +9,8 @@ OUTPUT_ROOT="${STT_OUTPUT_ROOT:-$HOME/Transcripts}"
 
 INPUT_MODE=""
 INPUT_VALUE=""
+
+umask 077
 
 require_opt_value() {
   local opt_name="$1"
@@ -161,8 +162,7 @@ if [[ ! -w "$OUTPUT_ROOT" ]]; then
   echo "Error: output root is not writable: $OUTPUT_ROOT"
   exit 1
 fi
-RUN_DIR="$OUTPUT_ROOT/${STAMP}-${SAFE_TITLE}"
-mkdir -p "$RUN_DIR"
+RUN_DIR="$(mktemp -d "$OUTPUT_ROOT/${STAMP}-${SAFE_TITLE}-XXXXXX")"
 
 WAV_PATH="$RUN_DIR/audio.wav"
 

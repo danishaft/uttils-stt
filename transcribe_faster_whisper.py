@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """Transcribe audio files using faster-whisper model."""
+
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from faster_whisper import WhisperModel
-
 
 def format_srt_time(seconds: float) -> str:
     """Convert seconds to SRT timestamp format."""
-    total_ms = int(round(seconds * 1000))
+    total_ms = round(seconds * 1000)
     hours = total_ms // 3_600_000
     remainder = total_ms % 3_600_000
     minutes = remainder // 60_000
@@ -22,11 +22,22 @@ def format_srt_time(seconds: float) -> str:
 
 
 def main() -> int:
+    from faster_whisper import WhisperModel
+
+    os.umask(0o077)
     parser = argparse.ArgumentParser(description="Transcribe audio with faster-whisper")
     parser.add_argument("--input", required=True, help="Path to WAV file")
     parser.add_argument("--out-dir", required=True, help="Output directory")
-    parser.add_argument("--model", default="small", help="Whisper model (tiny/small/medium/large-v3)")
-    parser.add_argument("--language", default="auto", help="Language code (en, fr, etc.) or auto")
+    parser.add_argument(
+        "--model",
+        default="small",
+        help="Whisper model (tiny/small/medium/large-v3)",
+    )
+    parser.add_argument(
+        "--language",
+        default="auto",
+        help="Language code (en, fr, etc.) or auto",
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input)
@@ -37,10 +48,9 @@ def main() -> int:
         print(f"Error: input file not found: {input_path}", file=sys.stderr)
         return 1
 
-    # Load model and transcribe
     print(f"Loading model '{args.model}'...")
     model = WhisperModel(args.model)
-    
+
     print(f"Transcribing {input_path.name}...")
     segments, info = model.transcribe(
         str(input_path),
@@ -49,34 +59,33 @@ def main() -> int:
         vad_filter=True,
     )
 
-    # Collect segments for output
     segment_list = []
-    
-    # Write transcript.txt
+
     transcript_path = out_dir / "transcript.txt"
-    with open(transcript_path, "w", encoding="utf-8") as f:
+    with transcript_path.open("w", encoding="utf-8") as output:
         for segment in segments:
-            segment_list.append({
-                "start": segment.start,
-                "end": segment.end,
-                "text": segment.text,
-            })
-            f.write(segment.text + "\n")
+            segment_list.append(
+                {
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": segment.text,
+                }
+            )
+            output.write(segment.text + "\n")
 
-    # Write transcript.srt
     srt_path = out_dir / "transcript.srt"
-    with open(srt_path, "w", encoding="utf-8") as f:
+    with srt_path.open("w", encoding="utf-8") as output:
         for i, seg in enumerate(segment_list, 1):
-            f.write(f"{i}\n")
-            f.write(f"{format_srt_time(seg['start'])} --> {format_srt_time(seg['end'])}\n")
-            f.write(f"{seg['text']}\n\n")
+            output.write(f"{i}\n")
+            output.write(
+                f"{format_srt_time(seg['start'])} --> {format_srt_time(seg['end'])}\n"
+            )
+            output.write(f"{seg['text']}\n\n")
 
-    # Write segments.json
     segments_path = out_dir / "segments.json"
-    with open(segments_path, "w", encoding="utf-8") as f:
-        json.dump(segment_list, f, indent=2)
+    with segments_path.open("w", encoding="utf-8") as output:
+        json.dump(segment_list, output, indent=2)
 
-    # Write metadata.json
     metadata = {
         "model": args.model,
         "language": info.language if hasattr(info, "language") else args.language,
@@ -86,10 +95,10 @@ def main() -> int:
         "segment_count": len(segment_list),
     }
     metadata_path = out_dir / "metadata.json"
-    with open(metadata_path, "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2)
+    with metadata_path.open("w", encoding="utf-8") as output:
+        json.dump(metadata, output, indent=2)
 
-    print(f"Transcription complete:")
+    print("Transcription complete:")
     print(f"  {transcript_path}")
     print(f"  {srt_path}")
     print(f"  {segments_path}")
